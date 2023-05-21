@@ -1,0 +1,8 @@
+READ N;
+I := 0;
+SUM := 0;
+REPEAT
+  SUM := SUM + I;
+  I := I + 1
+UNTIL I < N;
+WRITE SUM

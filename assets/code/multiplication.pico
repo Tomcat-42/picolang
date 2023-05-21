@@ -1,0 +1,4 @@
+READ A;
+READ B;
+PROD := A * B;
+WRITE PROD

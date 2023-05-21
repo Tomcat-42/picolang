@@ -1,0 +1,4 @@
+READ A;
+READ B;
+C := A + B;
+WRITE C

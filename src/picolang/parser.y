@@ -1,10 +1,10 @@
 %{
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 extern int yylex();
-extern  int  yyparse ();
+extern int yyparse();
 extern FILE* yyin;
 
 void yyerror(const char* s);
@@ -12,65 +12,91 @@ void yyerror(const char* s);
 
 %union {
  int ival;
- float fval;
+ char* sval;
 }
 
-%token<ival> T_INT
-%token<fval> T_FLOAT
-%token  T_PLUS  T_MINUS  T_MULTIPLY  T_DIVIDE  T_LEFT  T_RIGHT
-%token T_NEWLINE T_QUIT
-%left T_PLUS T_MINUS
-%left T_MULTIPLY T_DIVIDE
+%token<ival> NUMBER
+%token<sval> ID
+%token ADD_OP SUB_OP MUL_OP DIV_OP EQUAL LESS
+%token LEFT_PAREN RIGHT_PAREN
+%token IF THEN ELSE END REPEAT UNTIL READ WRITE
+%token SEMICOLON ASSIGN
 
-%type<ival> expression
-%type<fval> mixed_expression
-
-%start calculation
+%start program
 
 %%
 
-calculation:
- | calculation line
+program:
+ cmd_seq
 ;
 
-line: T_NEWLINE
- | mixed_expression T_NEWLINE { printf("\tResult: %f\n", $1);}
- | expression T_NEWLINE { printf("\tResult: %i\n", $1); }
- | T_QUIT T_NEWLINE { printf("bye!\n"); exit(0); }
+cmd_seq: cmd
+ | cmd_seq SEMICOLON cmd { printf("Executing a command.\n"); }
 ;
 
-mixed_expression: T_FLOAT { $$ = $1; }
- | mixed_expression T_PLUS mixed_expression { $$ = $1 + $3; }
- | mixed_expression T_MINUS mixed_expression { $$ = $1 - $3; }
- | mixed_expression T_MULTIPLY mixed_expression { $$ = $1 * $3; }
- | mixed_expression T_DIVIDE mixed_expression { $$ = $1 / $3; }
- | T_LEFT mixed_expression T_RIGHT { $$ = $2; }
- | expression T_PLUS mixed_expression { $$ = $1 + $3; }
- | expression T_MINUS mixed_expression { $$ = $1 - $3; }
- | expression T_MULTIPLY mixed_expression { $$ = $1 * $3; }
- | expression T_DIVIDE mixed_expression { $$ = $1 / $3; }
- | mixed_expression T_PLUS expression { $$ = $1 + $3; }
- | mixed_expression T_MINUS expression { $$ = $1 - $3; }
- | mixed_expression T_MULTIPLY expression { $$ = $1 * $3; }
- | mixed_expression T_DIVIDE expression { $$ = $1 / $3; }
- | expression T_DIVIDE expression { $$ = $1 / (float)$3; }
+cmd: if_cmd
+ | repeat_cmd
+ | assign_cmd
+ | read_cmd
+ | write_cmd
 ;
 
-expression: T_INT { $$ = $1; }
- | expression T_PLUS expression { $$ = $1 + $3; }
- | expression T_MINUS expression { $$ = $1 - $3; }
- | expression T_MULTIPLY expression { $$ = $1 * $3; }
- | T_LEFT expression T_RIGHT { $$ = $2; }
+if_cmd: IF exp THEN cmd_seq END { printf("Executing an IF command.\n"); }
+ | IF exp THEN cmd_seq ELSE cmd_seq END { printf("Executing an IF/ELSE command.\n"); }
+;
+
+repeat_cmd: REPEAT cmd_seq UNTIL exp { printf("Executing a REPEAT command.\n"); }
+;
+
+assign_cmd: ID ASSIGN exp { printf("Executing an ASSIGN command.\n"); }
+;
+
+read_cmd: READ ID { printf("Executing a READ command.\n"); }
+;
+
+write_cmd: WRITE exp { printf("Executing a WRITE command.\n"); }
+;
+
+exp: simple_exp
+ | simple_exp rel_op simple_exp { printf("Executing a relational expression.\n"); }
+;
+
+rel_op:
+ EQUAL { printf("Relational operator EQUAL.\n"); }
+ | LESS { printf("Relational operator LESS.\n"); }
+;
+
+simple_exp: term
+ | simple_exp add_op term { printf("Executing a simple expression with an add operation.\n"); }
+;
+
+add_op:
+ ADD_OP { printf("Add operator ADD.\n"); }
+ | SUB_OP { printf("Add operator SUB.\n"); }
+;
+
+term: factor
+ | term mul_op factor { printf("Executing a term with a multiply operation.\n"); }
+;
+
+mul_op:
+ MUL_OP { printf("Multiply operator MUL.\n"); }
+ | DIV_OP { printf("Multiply operator DIV.\n"); }
+;
+
+factor: NUMBER { printf("Reading a number.\n"); }
+ | ID { printf("Reading an identifier.\n"); }
+ | LEFT_PAREN exp RIGHT_PAREN { printf("Executing a parenthesized expression.\n"); }
 ;
 
 %%
 
 int main() {
-yyin = stdin;
+ yyin = stdin;
 
  do {
- yyparse();
- } while(!feof(yyin));
+  yyparse();
+ } while (!feof(yyin));
 
  return 0;
 }
