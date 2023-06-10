@@ -1,3 +1,20 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-./app/app_test
+usage() {
+    echo -e "Usage: $0" 1>&2
+    exit 1
+}
+
+command_exists() {
+    if ! command -v """$1" >/dev/null 2>&1; then
+        echo "I require the command ""$1 but it's not installed. Abort."
+        exit 1
+    fi
+}
+
+command_exists "flex"
+command_exists "bison"
+command_exists "gcc"
+command_exists "make"
+
+# Make

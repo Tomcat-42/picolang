@@ -1,0 +1,7 @@
+READ A;
+IF A < 0 THEN
+  A := A - 1
+ELSE
+  A := A + 1
+END;
+WRITE A
