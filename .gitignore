@@ -59,3 +59,6 @@ build/
 .xmake/
 .cache
 compile_comands.json
+./bin
+compile_commands.json
+picoc

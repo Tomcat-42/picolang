@@ -18,3 +18,19 @@ command_exists "gcc"
 command_exists "make"
 
 # Make
+make clean && make
+
+# Grab all files in ./assets/code into an array
+files=()
+for file in ./assets/code/*; do
+    files+=("$file")
+done
+
+# Print each file and its output
+for file in "${files[@]}"; do
+  echo "File: $file"
+  cat "$file"
+  echo -e "\nOutput:"
+  ./picoc < "$file"
+  echo -e "\n"
+done

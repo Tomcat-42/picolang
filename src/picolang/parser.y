@@ -61,8 +61,8 @@ if_cmd:
     char* code = malloc(strlen($2.label) + strlen($2.code) + strlen($4.code) + strlen(ifLabel) + strlen(endLabel) + 50);
 
     int offset = snprintf(code, strlen($2.label) + 3, "%s", $2.label);
-    offset += snprintf(code + offset, strlen($2.code) + strlen(ifLabel) + 14, "if (%s) goto %s\n", $2.code, ifLabel);
-    offset += snprintf(code + offset, strlen(endLabel) + 8, "goto %s\n", endLabel);
+    offset += snprintf(code + offset, strlen($2.code) + strlen(ifLabel) + 14, "\tif (%s) goto %s\n", $2.code, ifLabel);
+    offset += snprintf(code + offset, strlen(endLabel) + 8, "\tgoto %s\n", endLabel);
     offset += snprintf(code + offset, strlen(ifLabel) + 4, "%s:\n", ifLabel);
     offset += snprintf(code + offset, strlen($4.code) + 2, "%s", $4.code);
     snprintf(code + offset, strlen(endLabel) + 4, "%s:\n", endLabel);
@@ -81,13 +81,13 @@ if_cmd:
     char* code = malloc(strlen($2.label) + strlen($2.code) + strlen($4.code) + strlen($6.code) + strlen(ifLabel) + strlen(elseLabel) + strlen(endLabel) + 100);
 
     int offset = snprintf(code, strlen($2.label) + 3, "%s", $2.label);
-    offset += snprintf(code + offset, strlen($2.code) + strlen(ifLabel) + 14, "if (%s) goto %s\n", $2.code, ifLabel);
-    offset += snprintf(code + offset, strlen(elseLabel) + 8, "goto %s\n", elseLabel);
+    offset += snprintf(code + offset, strlen($2.code) + strlen(ifLabel) + 14, "\tif (%s) goto %s\n", $2.code, ifLabel);
+    offset += snprintf(code + offset, strlen(elseLabel) + 8, "\tgoto %s\n", elseLabel);
     offset += snprintf(code + offset, strlen(ifLabel) + 4, "%s:\n", ifLabel);
     offset += snprintf(code + offset, strlen($4.code) + 2, "%s", $4.code);
-    offset += snprintf(code + offset, strlen(endLabel) + 8, "goto %s\n", endLabel);
+    offset += snprintf(code + offset, strlen(endLabel) + 8, "\tgoto %s\n", endLabel);
     offset += snprintf(code + offset, strlen(elseLabel) + 4, "%s:\n", elseLabel);
-    offset += snprintf(code + offset, strlen($6.code) + 2, "%s\n", $6.code);
+    offset += snprintf(code + offset, strlen($6.code) + 2, "%s", $6.code);
     snprintf(code + offset, strlen(endLabel) + 4, "%s:\n", endLabel);
 
     $$ = (Node) { code, createString("") };
@@ -107,7 +107,7 @@ repeat_cmd: REPEAT cmd_seq UNTIL exp {
 
     char* code = malloc(strlen($2.code) + strlen($4.code) + strlen(startLabel) + strlen(endLabel) + 50);
 
-    sprintf(code, "%s:\n%sif (%s) goto %s\ngoto %s\n%s:\n", startLabel, $2.code, $4.code, endLabel, startLabel, endLabel);
+    sprintf(code, "%s:\n%s\n\tif (%s) goto %s\n\tgoto %s\n%s:\n", startLabel, $2.code, $4.code, endLabel, startLabel, endLabel);
     $$ = (Node) { code, createString("") };
 
     free($2.code);
@@ -119,7 +119,7 @@ assign_cmd: ID ASSIGN exp {
     trimEnd($3.code);
     char* code = malloc(strlen($1) + strlen($3.code) + 5);
     //char* label = createString($1);
-    sprintf(code, "%s%s = %s\n", $3.label, $1, $3.code);
+    sprintf(code, "%s\t%s = %s\n", $3.label, $1, $3.code);
     $$ = (Node) { code, createString("") };
     free($3.code);
 }
@@ -127,7 +127,7 @@ assign_cmd: ID ASSIGN exp {
 
 read_cmd: READ ID {
     char* code = malloc(strlen($2) + 15);
-    sprintf(code, "%s = READ()\n", $2);
+    sprintf(code, "\t%s = READ()\n", $2);
     $$ = (Node) { code, createString("") };
 }
 ;
@@ -135,7 +135,7 @@ read_cmd: READ ID {
 write_cmd: WRITE exp {
     trimEnd($2.code);
     char* code = malloc(strlen($2.code) + 10);
-    sprintf(code, "%sWRITE(%s)", $2.label, $2.code);
+    sprintf(code, "%s\tWRITE(%s)", $2.label, $2.code);
     $$ = (Node) { code, createString("") };
     free($2.code);
 }
@@ -154,7 +154,7 @@ simple_exp: term {
     trimEnd($2.code);
     trimEnd($3.code);
 
-    snprintf(label, strlen(temp) + strlen($1.code) + 20, "%s%s = %s\n",$1.label, temp, $1.code);
+    snprintf(label, strlen(temp) + strlen($1.code) + 20, "\t%s%s = %s\n",$1.label, temp, $1.code);
     snprintf(code, strlen(temp) + strlen($2.code) + strlen($3.code) + 20, "%s %s %s", temp, $2.code, $3.code);
 
     $$ = (Node) { code, label };
@@ -178,7 +178,7 @@ exp: simple_exp {
     trimEnd($2.code);
     trimEnd($3.code);
 
-    snprintf(label, strlen(temp) + strlen($1.code) + 20, "%s%s = %s\n",$1.label, temp, $1.code);
+    snprintf(label, strlen(temp) + strlen($1.code) + 20, "\t%s%s = %s\n",$1.label, temp, $1.code);
     snprintf(code, strlen(temp) + strlen($2.code) + strlen($3.code) + 20, "%s %s %s", temp, $2.code, $3.code);
 
     $$ = (Node) { code, label };
@@ -202,7 +202,7 @@ term: factor {
     trimEnd($2.code);
     trimEnd($3.code);
 
-    snprintf(label, strlen(temp) + strlen($1.code) + 20, "%s%s = %s\n",$1.label, temp, $1.code);
+    snprintf(label, strlen(temp) + strlen($1.code) + 20, "\t%s%s = %s\n",$1.label, temp, $1.code);
     snprintf(code, strlen(temp) + strlen($2.code) + strlen($3.code) + 20, "%s %s %s\n", temp, $2.code, $3.code);
 
     $$ = (Node) { code, label };
